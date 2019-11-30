@@ -65,6 +65,7 @@ class GlApp {
     InitializeTexture(image_url) {
         // create a texture, and upload a temporary 1px white RGBA array [255,255,255,255]
         let texture;
+        
 
         // load the actual image
         let image = new Image();
@@ -80,24 +81,47 @@ class GlApp {
     }
 
     Render() {
+        //console.log("look here " , this.shader['gouraud_color']);
         this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
-        
         // draw all models --> note you need to properly select shader here
         for (let i = 0; i < this.scene.models.length; i ++) {
-            this.gl.useProgram(this.shader['emissive'].program);
+            this.gl.useProgram(this.shader[this.algorithm + "_" + this.scene.models[i].shader].program);
 
             glMatrix.mat4.identity(this.model_matrix);
             glMatrix.mat4.translate(this.model_matrix, this.model_matrix, this.scene.models[i].center);
             glMatrix.mat4.scale(this.model_matrix, this.model_matrix, this.scene.models[i].size);
 
-            this.gl.uniform3fv(this.shader['emissive'].uniform.material, this.scene.models[i].material.color);
-            this.gl.uniformMatrix4fv(this.shader['emissive'].uniform.projection, false, this.projection_matrix);
-            this.gl.uniformMatrix4fv(this.shader['emissive'].uniform.view, false, this.view_matrix);
-            this.gl.uniformMatrix4fv(this.shader['emissive'].uniform.model, false, this.model_matrix);
+            //material_color
+            this.gl.uniform3fv(this.shader[this.algorithm + "_" + this.scene.models[i].shader].uniform.material_col, this.scene.models[i].material.color);
+            //material_specular
+            this.gl.uniform3fv(this.shader[this.algorithm + "_" + this.scene.models[i].shader].uniform.material_spec, this.scene.models[i].material.specular);
+            //material_shininess
+            this.gl.uniform1f(this.shader[this.algorithm + "_" + this.scene.models[i].shader].uniform.shininess, this.scene.models[i].material.shininess);
+            //projection_matrix
+            this.gl.uniformMatrix4fv(this.shader[this.algorithm + "_" + this.scene.models[i].shader].uniform.projection, false, this.projection_matrix);
+            //view_matrix
+            this.gl.uniformMatrix4fv(this.shader[this.algorithm + "_" + this.scene.models[i].shader].uniform.view, false, this.view_matrix);
+            //model_matrix
+            this.gl.uniformMatrix4fv(this.shader[this.algorithm + "_" + this.scene.models[i].shader].uniform.model, false, this.model_matrix);
+            //light_ambient
+            this.gl.uniform3fv(this.shader[this.algorithm + "_" + this.scene.models[i].shader].uniform.light_ambient, this.scene.light.ambient);
+            //camera_position
+            this.gl.uniform3fv(this.shader[this.algorithm + "_" + this.scene.models[i].shader].uniform.camera_pos, this.scene.camera.position);
+            
+            for (let j = 0; j < this.scene.light.point_lights.length; j++) {
+              //light_position
+              this.gl.uniform3fv(this.shader[this.algorithm + "_" + this.scene.models[i].shader].uniform.light_pos, this.scene.light.point_lights[j].position);
+              //light_color
+              this.gl.uniform3fv(this.shader[this.algorithm + "_" + this.scene.models[i].shader].uniform.light_col, this.scene.light.point_lights[j].color);
+              
+              this.gl.bindVertexArray(this.vertex_array[this.scene.models[i].type]);
+              this.gl.drawElements(this.gl.TRIANGLES, this.vertex_array[this.scene.models[i].type].face_index_count, this.gl.UNSIGNED_SHORT, 0);
+              this.gl.bindVertexArray(null);
+            }
+            
+            
 
-            this.gl.bindVertexArray(this.vertex_array[this.scene.models[i].type]);
-            this.gl.drawElements(this.gl.TRIANGLES, this.vertex_array[this.scene.models[i].type].face_index_count, this.gl.UNSIGNED_SHORT, 0);
-            this.gl.bindVertexArray(null);
+            
         }
 
         // draw all light sources
@@ -121,6 +145,8 @@ class GlApp {
     }
 
     UpdateScene(scene) {
+        //console.log("updating scene" , scene);
+        
         this.scene = scene;
         
         let cam_pos = this.scene.camera.position;
@@ -133,6 +159,7 @@ class GlApp {
     }
 
     SetShadingAlgorithm(algorithm) {
+        console.log("algorithm " , algorithm);
         this.algorithm = algorithm;
         this.Render();
     }
