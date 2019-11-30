@@ -7,9 +7,9 @@
     "models": [
         {
             "type": "plane",
-            "shader": "texture",
+            "shader": "color",
             "material": {
-                "color": [1.0, 1.0, 1.0],
+                "color": [0.0, 1.0, 0.5],
                 "specular": [0.0, 0.0, 0.0],
                 "shininess": 1
             },
@@ -22,9 +22,9 @@
         },
         {
             "type": "sphere",
-            "shader": "texture",
+            "shader": "color",
             "material": {
-                "color": [1.0, 1.0, 1.0],
+                "color": [1.0, 0.0, 0.0],
                 "specular": [1.0, 1.0, 1.0],
                 "shininess": 32
             },
