@@ -9,9 +9,9 @@
             "type": "plane",
             "shader": "color",
             "material": {
-                "color": [0.0, 1.0, 0.5],
-                "specular": [0.0, 0.0, 0.0],
-                "shininess": 1
+                "color": [0.0, 0.0, 1.0],
+                "specular": [1.0, 1.0, 1.0],
+                "shininess": 32
             },
             "texture": {
                 "url": "images/Checker.jpg",
@@ -41,10 +41,6 @@
         "point_lights": [
             {
                 "position": [1.5, 3.0, 1.5],
-                "color": [1.0, 1.0, 1.0]
-            },
-            {
-                "position": [-2.0, 3.5, -2.5],
                 "color": [1.0, 1.0, 1.0]
             }
         ]
