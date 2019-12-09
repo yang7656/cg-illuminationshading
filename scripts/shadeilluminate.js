@@ -64,9 +64,13 @@ class GlApp {
 
     InitializeTexture(image_url) {
         // create a texture, and upload a temporary 1px white RGBA array [255,255,255,255]
-        let texture = [255, 255, 255, 255];
-        
-        
+		var white =  [255,255,255,255];
+		let texture = this.gl.createTexture();
+		this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
+		this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
+		this.gl.texImage2D(this.gl.TEXTURE_2D, 0,this.gl.RGBA, 1, 1, 0,this.gl.RGBA, this.gl.UNSIGNED_BYTE, new Uint8Array(white));
+		this.gl.bindTexture(this.gl.TEXTURE_2D, null);
+
         // load the actual image
         let image = new Image();
         image.crossOrigin = 'anonymous';
@@ -74,65 +78,71 @@ class GlApp {
             this.UpdateTexture(texture, image);
         }, false);
         image.src = image_url;
+        
+        return texture;
     }
 
     UpdateTexture(texture, image_element) {
-        //var sampler_uniform = gl.getUniformLocation(, "u_sampler");
-        
+		
+        this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
+		this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA,this.gl.UNSIGNED_BYTE, image_element);
+		this.gl.generateMipmap(this.gl.TEXTURE_2D);
+		this.gl.bindTexture(this.gl.TEXTURE_2D, null);
+		this.Render();
     }
 
     Render() {
-        console.log("look here " , this.shader['gouraud_texture']);
         this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
+        
         // draw all models --> note you need to properly select shader here
         for (let i = 0; i < this.scene.models.length; i ++) {
+			
             this.gl.useProgram(this.shader[this.algorithm + "_" + this.scene.models[i].shader].program);
 
             glMatrix.mat4.identity(this.model_matrix);
             glMatrix.mat4.translate(this.model_matrix, this.model_matrix, this.scene.models[i].center);
             glMatrix.mat4.scale(this.model_matrix, this.model_matrix, this.scene.models[i].size);
-            //--color--
-            //color
-            this.gl.uniform3fv(this.shader[this.algorithm + "_" + this.scene.models[i].shader].uniform.material_col, this.scene.models[i].material.color);
-            //material_specular
-            this.gl.uniform3fv(this.shader[this.algorithm + "_" + this.scene.models[i].shader].uniform.material_spec, this.scene.models[i].material.specular);
-            //material_shininess
+			
+            // material_shininess, n
             this.gl.uniform1f(this.shader[this.algorithm + "_" + this.scene.models[i].shader].uniform.shininess, this.scene.models[i].material.shininess);
-            //projection_matrix
-            this.gl.uniformMatrix4fv(this.shader[this.algorithm + "_" + this.scene.models[i].shader].uniform.projection, false, this.projection_matrix);
-            //view_matrix
-            this.gl.uniformMatrix4fv(this.shader[this.algorithm + "_" + this.scene.models[i].shader].uniform.view, false, this.view_matrix);
-            //model_matrix
+            // material_color, Ka and Kd
+            this.gl.uniform3fv(this.shader[this.algorithm + "_" + this.scene.models[i].shader].uniform.material_col, this.scene.models[i].material.color);
+            // material_specular, Ks
+            this.gl.uniform3fv(this.shader[this.algorithm + "_" + this.scene.models[i].shader].uniform.material_spec, this.scene.models[i].material.specular);
+            // model_matrix
             this.gl.uniformMatrix4fv(this.shader[this.algorithm + "_" + this.scene.models[i].shader].uniform.model, false, this.model_matrix);
-            //light_ambient
-            this.gl.uniform3fv(this.shader[this.algorithm + "_" + this.scene.models[i].shader].uniform.light_ambient, this.scene.light.ambient);
-            //camera_position
+            // view_matrix
+            this.gl.uniformMatrix4fv(this.shader[this.algorithm + "_" + this.scene.models[i].shader].uniform.view, false, this.view_matrix);
+            // projection_matrix
+            this.gl.uniformMatrix4fv(this.shader[this.algorithm + "_" + this.scene.models[i].shader].uniform.projection, false, this.projection_matrix);
+            // camera_position
             this.gl.uniform3fv(this.shader[this.algorithm + "_" + this.scene.models[i].shader].uniform.camera_pos, this.scene.camera.position);
+            // light_ambient
+            this.gl.uniform3fv(this.shader[this.algorithm + "_" + this.scene.models[i].shader].uniform.light_ambient, this.scene.light.ambient);
+            // nums of light
+            this.gl.uniform1i(this.shader[this.algorithm + "_" + this.scene.models[i].shader].uniform.nums_light, this.scene.light.point_lights.length);
             
-            //this.gl.uniform
-
-            //this.gl.sampler2D(this.shader[this.algorithm + "_" + this.scene.models[i].shader].uniform.image, this.scene.models[i].texture.url);
-            
-            //var light_position_array = [];
-            //var count = 0;
             for (let j = 0; j < this.scene.light.point_lights.length; j++) {
-              console.log(this.scene.light.point_lights[j].position);
-              //populating light_position_array
-              this.gl.uniform3fv(this.shader[this.algorithm + "_" + this.scene.models[i].shader].uniform.light_pos, this.scene.light.point_lights[j].position);
+                // light_position
+                this.gl.uniform3fv(this.shader[this.algorithm + "_" + this.scene.models[i].shader].uniform.light_pos[j], this.scene.light.point_lights[j].position);
+                // light_color
+                this.gl.uniform3fv(this.shader[this.algorithm + "_" + this.scene.models[i].shader].uniform.light_col[j], this.scene.light.point_lights[j].color);
             }
-            //console.log("light position array: " , light_position_array);
-            //light_position
             
-            //light_color
-            this.gl.uniform3fv(this.shader[this.algorithm + "_" + this.scene.models[i].shader].uniform.light_col, this.scene.light.point_lights[0].color);
-            this.gl.uniform1i(this.shader[this.algorithm + "_" + this.scene.models[i].shader].uniform.num_lights, this.scene.light.point_lights.length);
-
+            if (this.scene.models[i].shader === "texture") {
+                // texture_scale
+                this.gl.uniform2fv(this.shader[this.algorithm + "_texture"].uniform.tex_scale, this.scene.models[i].texture.scale);
+                // image
+                this.gl.activeTexture(this.gl.TEXTURE0);
+                this.gl.bindTexture(this.gl.TEXTURE_2D, this.scene.models[i].texture.id);
+                this.gl.uniform1i(this.shader[this.algorithm + '_texture'].uniform.image, 0);
+				
+            }
+			
+			
             this.gl.bindVertexArray(this.vertex_array[this.scene.models[i].type]);
             this.gl.drawElements(this.gl.TRIANGLES, this.vertex_array[this.scene.models[i].type].face_index_count, this.gl.UNSIGNED_SHORT, 0);
             this.gl.bindVertexArray(null);
-            
-
-            
         }
 
         // draw all light sources
@@ -144,7 +154,7 @@ class GlApp {
             glMatrix.mat4.scale(this.model_matrix, this.model_matrix, glMatrix.vec3.fromValues(0.1, 0.1, 0.1));
 
 
-            this.gl.uniform3fv(this.shader['emissive'].uniform.material, this.scene.light.point_lights[i].color);
+            this.gl.uniform3fv(this.shader['emissive'].uniform.material_col, this.scene.light.point_lights[i].color);
             this.gl.uniformMatrix4fv(this.shader['emissive'].uniform.projection, false, this.projection_matrix);
             this.gl.uniformMatrix4fv(this.shader['emissive'].uniform.view, false, this.view_matrix);
             this.gl.uniformMatrix4fv(this.shader['emissive'].uniform.model, false, this.model_matrix);
@@ -156,8 +166,6 @@ class GlApp {
     }
 
     UpdateScene(scene) {
-        //console.log("updating scene" , scene);
-        
         this.scene = scene;
         
         let cam_pos = this.scene.camera.position;
@@ -170,7 +178,6 @@ class GlApp {
     }
 
     SetShadingAlgorithm(algorithm) {
-        console.log("algorithm " , algorithm);
         this.algorithm = algorithm;
         this.Render();
     }
@@ -218,8 +225,29 @@ class GlApp {
         this.LinkShaderProgram(program);
 
         let light_ambient_uniform = this.gl.getUniformLocation(program, 'light_ambient');
-		let light_pos_uniform = this.gl.getUniformLocation(program, 'light_position');
-        let light_col_uniform = this.gl.getUniformLocation(program, 'light_color');
+        
+		let light_pos_uniform_0 = this.gl.getUniformLocation(program, 'light_position[0]');
+        let light_pos_uniform_1 = this.gl.getUniformLocation(program, 'light_position[1]');
+        let light_pos_uniform_2 = this.gl.getUniformLocation(program, 'light_position[2]');
+        let light_pos_uniform_3 = this.gl.getUniformLocation(program, 'light_position[3]');
+        let light_pos_uniform_4 = this.gl.getUniformLocation(program, 'light_position[4]');
+        let light_pos_uniform_5 = this.gl.getUniformLocation(program, 'light_position[5]');
+        let light_pos_uniform_6 = this.gl.getUniformLocation(program, 'light_position[6]');
+        let light_pos_uniform_7 = this.gl.getUniformLocation(program, 'light_position[7]');
+        let light_pos_uniform_8 = this.gl.getUniformLocation(program, 'light_position[8]');
+        let light_pos_uniform_9 = this.gl.getUniformLocation(program, 'light_position[9]');
+        
+        let light_col_uniform_0 = this.gl.getUniformLocation(program, 'light_color[0]');
+        let light_col_uniform_1 = this.gl.getUniformLocation(program, 'light_color[1]');
+        let light_col_uniform_2 = this.gl.getUniformLocation(program, 'light_color[2]');
+        let light_col_uniform_3 = this.gl.getUniformLocation(program, 'light_color[3]');
+        let light_col_uniform_4 = this.gl.getUniformLocation(program, 'light_color[4]');
+        let light_col_uniform_5 = this.gl.getUniformLocation(program, 'light_color[5]');
+        let light_col_uniform_6 = this.gl.getUniformLocation(program, 'light_color[6]');
+        let light_col_uniform_7 = this.gl.getUniformLocation(program, 'light_color[7]');
+        let light_col_uniform_8 = this.gl.getUniformLocation(program, 'light_color[8]');
+        let light_col_uniform_9 = this.gl.getUniformLocation(program, 'light_color[9]');
+        
         let camera_pos_uniform = this.gl.getUniformLocation(program, 'camera_position');
         let material_col_uniform = this.gl.getUniformLocation(program, 'material_color');
         let material_spec_uniform = this.gl.getUniformLocation(program, 'material_specular');
@@ -227,14 +255,32 @@ class GlApp {
         let projection_uniform = this.gl.getUniformLocation(program, 'projection_matrix');
         let view_uniform = this.gl.getUniformLocation(program, 'view_matrix');
         let model_uniform = this.gl.getUniformLocation(program, 'model_matrix');
-        let num_lights_uniform = this.gl.getUniformLocation(program, 'num_lights');
+        let nums_light_uniform = this.gl.getUniformLocation(program, 'nums_light');
 
         this.shader[program_name] = {
             program: program,
             uniform: {
 				light_ambient: light_ambient_uniform,
-                light_pos: light_pos_uniform,
-                light_col: light_col_uniform,
+                light_pos: [light_pos_uniform_0,
+                            light_pos_uniform_1,
+                            light_pos_uniform_2,
+                            light_pos_uniform_3,
+                            light_pos_uniform_4,
+                            light_pos_uniform_5,
+                            light_pos_uniform_6,
+                            light_pos_uniform_7,
+                            light_pos_uniform_8,
+                            light_pos_uniform_9],
+                light_col: [light_col_uniform_0,
+                            light_col_uniform_1,
+                            light_col_uniform_2,
+                            light_col_uniform_3,
+                            light_col_uniform_4,
+                            light_col_uniform_5,
+                            light_col_uniform_6,
+                            light_col_uniform_7,
+                            light_col_uniform_8,
+                            light_col_uniform_9],
                 camera_pos: camera_pos_uniform,
                 material_col: material_col_uniform,
                 material_spec: material_spec_uniform,
@@ -242,7 +288,7 @@ class GlApp {
                 projection: projection_uniform,
                 view: view_uniform,
                 model: model_uniform,
-                num_lights: num_lights_uniform
+                nums_light: nums_light_uniform
             }
         };
     }
@@ -261,8 +307,29 @@ class GlApp {
         this.LinkShaderProgram(program);
 
 		let light_ambient_uniform = this.gl.getUniformLocation(program, 'light_ambient');
-        let light_pos_uniform = this.gl.getUniformLocation(program, 'light_position');
-        let light_col_uniform = this.gl.getUniformLocation(program, 'light_color');
+        
+        let light_pos_uniform_0 = this.gl.getUniformLocation(program, 'light_position[0]');
+        let light_pos_uniform_1 = this.gl.getUniformLocation(program, 'light_position[1]');
+        let light_pos_uniform_2 = this.gl.getUniformLocation(program, 'light_position[2]');
+        let light_pos_uniform_3 = this.gl.getUniformLocation(program, 'light_position[3]');
+        let light_pos_uniform_4 = this.gl.getUniformLocation(program, 'light_position[4]');
+        let light_pos_uniform_5 = this.gl.getUniformLocation(program, 'light_position[5]');
+        let light_pos_uniform_6 = this.gl.getUniformLocation(program, 'light_position[6]');
+        let light_pos_uniform_7 = this.gl.getUniformLocation(program, 'light_position[7]');
+        let light_pos_uniform_8 = this.gl.getUniformLocation(program, 'light_position[8]');
+        let light_pos_uniform_9 = this.gl.getUniformLocation(program, 'light_position[9]');
+        
+        let light_col_uniform_0 = this.gl.getUniformLocation(program, 'light_color[0]');
+        let light_col_uniform_1 = this.gl.getUniformLocation(program, 'light_color[1]');
+        let light_col_uniform_2 = this.gl.getUniformLocation(program, 'light_color[2]');
+        let light_col_uniform_3 = this.gl.getUniformLocation(program, 'light_color[3]');
+        let light_col_uniform_4 = this.gl.getUniformLocation(program, 'light_color[4]');
+        let light_col_uniform_5 = this.gl.getUniformLocation(program, 'light_color[5]');
+        let light_col_uniform_6 = this.gl.getUniformLocation(program, 'light_color[6]');
+        let light_col_uniform_7 = this.gl.getUniformLocation(program, 'light_color[7]');
+        let light_col_uniform_8 = this.gl.getUniformLocation(program, 'light_color[8]');
+        let light_col_uniform_9 = this.gl.getUniformLocation(program, 'light_color[9]');
+        
         let camera_pos_uniform = this.gl.getUniformLocation(program, 'camera_position');
         let material_col_uniform = this.gl.getUniformLocation(program, 'material_color');
         let material_spec_uniform = this.gl.getUniformLocation(program, 'material_specular');
@@ -272,13 +339,32 @@ class GlApp {
         let projection_uniform = this.gl.getUniformLocation(program, 'projection_matrix');
         let view_uniform = this.gl.getUniformLocation(program, 'view_matrix');
         let model_uniform = this.gl.getUniformLocation(program, 'model_matrix');
+        let nums_light_uniform = this.gl.getUniformLocation(program, 'nums_light');
 
         this.shader[program_name] = {
             program: program,
             uniform: {
 				light_ambient: light_ambient_uniform,
-                light_pos: light_pos_uniform,
-                light_col: light_col_uniform,
+                light_pos: [light_pos_uniform_0,
+                            light_pos_uniform_1,
+                            light_pos_uniform_2,
+                            light_pos_uniform_3,
+                            light_pos_uniform_4,
+                            light_pos_uniform_5,
+                            light_pos_uniform_6,
+                            light_pos_uniform_7,
+                            light_pos_uniform_8,
+                            light_pos_uniform_9],
+                light_col: [light_col_uniform_0,
+                            light_col_uniform_1,
+                            light_col_uniform_2,
+                            light_col_uniform_3,
+                            light_col_uniform_4,
+                            light_col_uniform_5,
+                            light_col_uniform_6,
+                            light_col_uniform_7,
+                            light_col_uniform_8,
+                            light_col_uniform_9],
                 camera_pos: camera_pos_uniform,
                 material_col: material_col_uniform,
                 material_spec: material_spec_uniform,
@@ -287,7 +373,8 @@ class GlApp {
                 shininess: shininess_uniform,
                 projection: projection_uniform,
                 view: view_uniform,
-                model: model_uniform
+                model: model_uniform,
+                nums_light: nums_light_uniform
             }
         };
     }
@@ -303,7 +390,7 @@ class GlApp {
 
         this.LinkShaderProgram(program);
 
-        let material_uniform = this.gl.getUniformLocation(program, 'material_color');
+        let material_col_uniform = this.gl.getUniformLocation(program, 'material_color');
         let projection_uniform = this.gl.getUniformLocation(program, 'projection_matrix');
         let view_uniform = this.gl.getUniformLocation(program, 'view_matrix');
         let model_uniform = this.gl.getUniformLocation(program, 'model_matrix');
@@ -311,7 +398,7 @@ class GlApp {
         this.shader[program_name] = {
             program: program,
             uniform: {
-                material: material_uniform,
+                material_col: material_col_uniform,
                 projection: projection_uniform,
                 view: view_uniform,
                 model: model_uniform
