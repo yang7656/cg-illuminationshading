@@ -7,26 +7,30 @@
     "models": [
         {
             "type": "plane",
-            "shader": "color",
+            "shader": "texture",
             "material": {
-                "color": [0.0, 0.0, 0.0],
+                "color": [1.0, 1.0, 1.0],
                 "specular": [1.0, 1.0, 1.0],
                 "shininess": 10
             },
              "texture": {
-                "url": "images/tile.jpg",
+                "url": "images/electric.jpg",
                 "scale": [1, 1]
             },
             "center": [0.0, 0.0, -20.0],
             "size": [8.0, 1.0, 50.0]
         },
-                {
+        {
             "type": "plane",
-            "shader": "color",
+            "shader": "texture",
             "material": {
-                "color": [0.0, 0.0, 0.0],
+                "color": [1.0, 1.0, 1.0],
                 "specular": [1.0, 1.0, 1.0],
-                "shininess": 10
+                "shininess": 32
+            },
+             "texture": {
+                "url": "images/electric.jpg",
+                "scale": [1, 1]
             },
             "center": [0.0, 8.0, -20.0],
             "size": [8.0, 1.0, 50.0]
@@ -2533,16 +2537,33 @@
             "size": [2.0, 2.0, 2.0]
         },
 
+        
+        {
+            "type": "sphere",
+            "shader": "texture",
+            "material": {
+                "color": [0.0, 1.0, 0.0],
+                "specular": [1.0, 1.0, 1.0],
+                "shininess": 32
+            },
+             "texture": {
+                "url": "images/explosion.jpg",
+                "scale": [1, 1]
+            },
+            "center": [0.0, -10.0, -22.0],
+            "size": [20.0, 20.0, 20.0]
+        },
+        
         {
             "type": "cube",
             "shader": "texture",
             "material": {
-                "color": [0.0, 1.0, 1.0],
+                "color": [1.0, 1.0, 1.0],
                 "specular": [0.0, 0.0, 0.0],
                 "shininess": 32
             },
              "texture": {
-                "url": "images/scary.jpg",
+                "url": "images/electric.jpg",
                 "scale": [1, 1]
             },
             "center": [0.0, 4.0, 4.0],
@@ -2552,12 +2573,12 @@
             "type": "cube",
             "shader": "texture",
             "material": {
-                "color": [0.0, 1.0, 1.0],
+                "color": [1.0, 0.0, 0.0],
                 "specular": [0.0, 0.0, 0.0],
                 "shininess": 32
             },
              "texture": {
-                "url": "images/cool.jpg",
+                "url": "images/electric.jpg",
                 "scale": [1, 1]
             },
             "center": [0.0, 4.0, -44.0],
@@ -2569,11 +2590,11 @@
         "point_lights": [
             {
                 "position": [0.0, 3.0, -35.0],
-                "color": [0.0, 0.0, 0.0]
+                "color": [1.0, 0.0, 0.0]
             },
             {
                 "position": [0.0, 3.0, -25.0],
-                "color": [0.0, 0.0, 1.0]
+                "color": [0.0, 1.0, 0.0]
             },
             {
                 "position": [0.0, 3.0, -15.0],
@@ -2581,8 +2602,17 @@
             },
             {
                 "position": [0.0, 3.0, -15.0],
-                "color": [0.0, 0.0, 0.0]
+                "color": [1.0, 0.0, 0.0]
+            },
+            {
+                "position": [-25.0, -10.0, -22.0],
+                "color": [1.0, 1.0, 1.0]
+            },
+            {
+                "position": [0.0, -10.0, -5.0],
+                "color": [1.0, 1.0, 1.0]
             }
+            
         ]
     }
 }
